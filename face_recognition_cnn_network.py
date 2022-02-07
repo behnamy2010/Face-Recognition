@@ -7,12 +7,16 @@ Original file is located at
     https://colab.research.google.com/drive/1r4EdZ9VAhfRl5rpjG6MQ75ifHhLjmAZT
 """
 
+!pip install visualkeras
+
 #Importing the sklearn face of celbrity dataset
 from sklearn.datasets import fetch_lfw_people
 faces = fetch_lfw_people(min_faces_per_person=50)
 
+# Commented out IPython magic to ensure Python compatibility.
 #Importing all the necessary libraries for the CNN network and for the normal Logistic Regression
 from sklearn.model_selection import train_test_split
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from keras.models import Sequential
@@ -23,6 +27,11 @@ from sklearn.metrics import classification_report
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import visualkeras
+import cv2
+from google.colab.patches import cv2_imshow
+
+# %matplotlib inline
 
 #Verify the name of the celebrity and the shape of the input image
 print(faces.target_names)
@@ -72,8 +81,13 @@ model.add(Dense(numclass, activation='softmax'))
 
 model.compile(loss='categorical_crossentropy', optimizer='Adam', metrics=['accuracy'])
 
+visualkeras.layered_view(model, to_file='output.png',legend=True)
+image = cv2.imread("output.png")
+cv2_imshow(image)
+
 #Model fit of the training dataset
-H1 = model.fit(X_train, y_train, epochs=100, batch_size=100, verbose=1, validation_split=0.2)
+callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
+H1 = model.fit(X_train, y_train, epochs=150, batch_size=100, verbose=1, validation_split=0.1,callbacks=[callback])
 
 #Plotting the resultant loss and the accuracy of the training and validation model
 plt.figure(figsize=(18,8))
@@ -91,7 +105,6 @@ plt.ylabel("accuracy function")
 plt.legend(loc='upper left')
 plt.show()
 
-#Model Evaluation of test dataset acquring 95.3% accuracy
 y_pred = model.predict(X_test)
 print("The accuracy of the predicted value from the model against the test value:", (1-np.mean(np.abs(y_pred-y_test)))*100)
 loss, accuracy = model.evaluate(X_test, y_test)
